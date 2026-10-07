@@ -1,0 +1,16 @@
+# 의존성 — npm install 로 복원
+node_modules/
+
+# 렌더 산출물(mp4 50~80MB)·검토용 스틸 — 재생성 가능, 깃에 올리지 않는다
+out/
+
+# Python 검토 스크립트용 가상환경
+.venv/
+
+# OS / 에디터
+.DS_Store
+.idea/
+.vscode/
+
+# Remotion 캐시
+.remotion/

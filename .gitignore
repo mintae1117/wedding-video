@@ -14,3 +14,8 @@ out/
 
 # Remotion 캐시
 .remotion/
+
+# 일상 소재(집 안 영상·4컷·배번 사진) — 리포가 public 이라 깃에 올리지 않는다.
+# 원본은 ~/Downloads/drive-download-20261012T235632Z-1-001, 재스테이징은 scripts/stage-media.py · scripts/stage-clips.sh
+public/clips/
+public/daily/

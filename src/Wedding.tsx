@@ -2,50 +2,30 @@ import React from 'react';
 import {AbsoluteFill} from 'remotion';
 import {TransitionSeries, linearTiming} from '@remotion/transitions';
 import {fade} from '@remotion/transitions/fade';
-import {useFonts} from './fonts';
 import {SCENES, sceneFrames, transitionFrames} from './plan';
-import {Opening} from './scenes/Opening';
-import {Ending} from './scenes/Ending';
-import {Duo, FullFit, Gallery} from './scenes/PhotoScenes';
-import {theme} from './theme';
+import {Table} from './scenes/Table';
+import {wood} from './theme';
 
-const renderScene = (s: (typeof SCENES)[number]) => {
-  switch (s.kind) {
-    case 'opening':
-      return <Opening />;
-    case 'ending':
-      return <Ending />;
-    case 'full':
-      return <FullFit photo={s.photo} />;
-    case 'gallery':
-      return <Gallery photo={s.photo} caption={s.caption} sub={s.sub} side={s.side} />;
-    case 'duo':
-      return <Duo photos={s.photos} caption={s.caption} />;
-  }
-};
-
-export const Wedding: React.FC = () => {
-  useFonts();
-  return (
-    <AbsoluteFill style={{background: theme.cream}}>
-      <TransitionSeries>
-        {SCENES.flatMap((s, i) => {
-          const seq = (
-            <TransitionSeries.Sequence key={`s${i}`} durationInFrames={sceneFrames(s)}>
-              {renderScene(s)}
-            </TransitionSeries.Sequence>
-          );
-          if (i === 0) return [seq];
-          return [
-            <TransitionSeries.Transition
-              key={`t${i}`}
-              presentation={fade()}
-              timing={linearTiming({durationInFrames: transitionFrames})}
-            />,
-            seq,
-          ];
-        })}
-      </TransitionSeries>
-    </AbsoluteFill>
-  );
-};
+/** plan.ts 의 SCENES 를 1초 페이드로 이어 붙인다 — 장면은 전부 우드 테이블(Table) */
+export const Wedding: React.FC = () => (
+  <AbsoluteFill style={{background: wood.walnutDeep}}>
+    <TransitionSeries>
+      {SCENES.flatMap((s, i) => {
+        const seq = (
+          <TransitionSeries.Sequence key={`s${i}`} durationInFrames={sceneFrames(s)}>
+            <Table tone={s.tone} items={s.items} size={s.size} extras={s.extras} fadeOut={s.fadeOut} />
+          </TransitionSeries.Sequence>
+        );
+        if (i === 0) return [seq];
+        return [
+          <TransitionSeries.Transition
+            key={`t${i}`}
+            presentation={fade()}
+            timing={linearTiming({durationInFrames: transitionFrames})}
+          />,
+          seq,
+        ];
+      })}
+    </TransitionSeries>
+  </AbsoluteFill>
+);

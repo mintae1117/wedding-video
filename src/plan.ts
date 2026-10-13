@@ -72,8 +72,9 @@ export type Scene = {
 const photo = (key: string): Item => ({kind: 'photo', key});
 const clip = (key: string): Item => ({kind: 'clip', key});
 const daily = (key: string, rotate = 0): Item => ({kind: 'daily', key, rotate});
-const STICKER_GRAY: Extra = {file: 'daily/sticker_cat_gray.png', left: 1655, top: 870, width: 150, rotate: 6, delay: 30};
-const STICKER_BROWN: Extra = {file: 'daily/sticker_cat_brown.png', left: 1630, top: 850, width: 180, rotate: -8, delay: 30};
+// 고양이 사진 장면에서 각자 자기 사진 아래에 — 회색은 왼쪽(catA), 갈색은 오른쪽(catB)
+const STICKER_GRAY: Extra = {file: 'daily/sticker_cat_gray.png', left: 150, top: 880, width: 160, rotate: -7, delay: 30};
+const STICKER_BROWN: Extra = {file: 'daily/sticker_cat_brown.png', left: 1630, top: 850, width: 180, rotate: 8, delay: 42};
 
 // 챕터(웨딩 사진) 사이사이에 일상 간주를 끼운다. dark(어두운 블러 배경)·light(크림 카드)를 번갈아 리듬을 만든다.
 // 영상이 든 장면은 (length - from) / rate 상한 안에서 최대한 길게.
@@ -89,7 +90,7 @@ export const SCENES: Scene[] = [
   {tone: 'light', items: [photo('p16')], size: 'l', seconds: 7.5},
   // 간주 1 — 2025 겨울·봄: 카페, 피아노 고양이, 4컷
   {tone: 'dark', items: [clip('cafe'), clip('catPiano')], size: 'l', seconds: 8},
-  {tone: 'light', items: [daily('s01', -2.5), daily('s02', 1.5), daily('s07', -1.2)], size: 'm', seconds: 8.5, extras: [STICKER_GRAY]},
+  {tone: 'light', items: [daily('s01', -2.5), daily('s02', 1.5), daily('s07', -1.2)], size: 'm', seconds: 8.5},
   // 벽돌집 (+ 같은 날 찍은 벽돌담 클립)
   {tone: 'light', items: [photo('p04'), photo('p05')], size: 'l', seconds: 8},
   {tone: 'dark', items: [clip('brickWall')], seconds: 6.5},
@@ -107,7 +108,7 @@ export const SCENES: Scene[] = [
   {tone: 'dark', items: [clip('catDoor')], size: 'l', seconds: 8},
   {tone: 'light', items: [clip('catLap')], size: 'l', seconds: 6.2},
   {tone: 'dark', items: [clip('catPet'), clip('catBlanket')], size: 'l', seconds: 6.8},
-  {tone: 'light', items: [daily('catA', -1.5), daily('catB', 1.2)], size: 'm', seconds: 7.5, extras: [STICKER_BROWN]},
+  {tone: 'light', items: [daily('catA', -1.5), daily('catB', 1.2)], size: 'm', seconds: 7.5, extras: [STICKER_GRAY, STICKER_BROWN]},
   // 블랙 캐주얼 거리
   {tone: 'light', items: [photo('p11'), photo('p12')], size: 'l', seconds: 8},
   {tone: 'dark', items: [photo('p13')], seconds: 8},

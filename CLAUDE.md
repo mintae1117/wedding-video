@@ -10,10 +10,10 @@ node -v                     # 22.x 필요 (nvm 권장). 20 이상이면 동작
 npm install                 # remotion 4.0.533 + react 19 — package-lock 그대로 (버전 올리지 말 것: @remotion/* 는 전부 같은 버전이어야 한다)
 npx remotion browser ensure # 렌더용 헤드리스 Chrome 다운로드(~150MB, 최초 1회)
 npx tsc --noEmit            # 타입 체크
-npx remotion compositions src/index.ts   # "Wedding 30 1920x1080 4401 (146.70 sec)" 가 나오면 정상
+npx remotion compositions src/index.ts   # "Wedding 30 1920x1080 5634 (187.80 sec)" 가 나오면 정상
 ```
 
-검토용 시트·텍스처·스테이징 스크립트는 시스템 python3(3.10, Pillow·numpy 있음)로 `python3 -I scripts/...` 로 돌린다.
+검토용 시트·스테이징 스크립트는 시스템 python3(3.10, Pillow·numpy 있음)로 `python3 -I scripts/...` 로 돌린다.
 시스템에 ffmpeg 는 없다 — `npx remotion ffmpeg` / `npx remotion ffprobe` 를 쓰거나 `pip3 install imageio-ffmpeg` 의 바이너리를 쓴다.
 사진이 비어 있으면 `bash scripts/fetch-photos.sh` (청첩장 R2 공개 버킷에서 재다운로드). 일상 소재(`public/daily`·`public/clips`)는 리포가 public 이라 깃에 없다 — 원본 폴더에서 `scripts/stage-media.py`·`scripts/stage-clips.sh` 로 다시 만든다.
 
@@ -27,11 +27,10 @@ npx remotion compositions src/index.ts   # "Wedding 30 1920x1080 4401 (146.70 se
 | 렌더 결과 프레임 추출 | `npx remotion ffmpeg -y -ss 64 -i out/wedding.mp4 -frames:v 1 out/t64.png` |
 | 메타 확인 | `npx remotion ffprobe -v error -show_entries stream=pix_fmt,color_range,color_space -show_entries format=duration -of default=nw=1 out/wedding.mp4` |
 | 시트 합성 | `python3 -I scripts/sheet.py out/review.jpg "라벨=out/f.png" ...` |
-| 텍스처 재생성 | `python3 -I scripts/textures.py` |
 | 일상 사진·스티커 스테이징 | `python3 -I scripts/stage-media.py <원본 폴더>` |
 | 일상 영상 스테이징 | `bash scripts/stage-clips.sh <원본 폴더>` |
 
-렌더 시간: M3 기준 147초 영상이 약 6분(동시성 기본값). `out/` 은 깃에 올리지 않는다.
+렌더 시간: M3 기준 147초 영상이 약 6분(동시성 기본값), 188초는 약 8분. `out/` 은 깃에 올리지 않는다.
 스틸을 여러 장 병렬로 뽑으면 webpack 캐시 경고(`PackFileCacheStrategy ... ENOENT`)가 뜨는데 무해하다.
 
 ## 구조
@@ -39,27 +38,27 @@ npx remotion compositions src/index.ts   # "Wedding 30 1920x1080 4401 (146.70 se
 | 파일 | 역할 |
 |---|---|
 | `src/plan.ts` | **편집의 전부** — 소재 표(`PHOTOS`·`DAILY`·`CLIPS`)와 `SCENES`(장면 순서·톤·길이·놓이는 것). 끝의 `validate()` 가 키 오타와 클립보다 긴 장면을 번들 시점에 던진다 |
-| `src/theme.ts` | `wood` 팔레트(월넛·오크·아이보리·브라스). 글자가 없으니 폰트 스택은 없다 |
-| `src/Wedding.tsx` | `SCENES` 를 `TransitionSeries`(1초 `fade`)로 이어 붙임 |
-| `src/scenes/Wood.tsx` | `WoodBackdrop`(텍스처 + 위에서 비치는 조명 + 비네트, 결이 장면 동안 ±16px 흐름) · `Mat`(아이보리 매트 + 그림자) |
-| `src/scenes/Table.tsx` | 장면 하나 = 테이블 위 미디어 0~3개를 **같은 높이로 나란히**. 사진·일상·영상(`OffthreadVideo`) 공용, `extras` 스티커, `fadeOut` |
+| `src/theme.ts` | 청첩장 팔레트 `theme`(크림·브라운·핑크·흰 매트). 글자가 없으니 폰트 스택은 없다 |
+| `src/Wedding.tsx` | `SCENES` 를 `TransitionSeries`(1.5초 `fade`)로 이어 붙임 |
+| `src/scenes/Backdrop.tsx` | `Lights`(떠다니는 핑크 빛·브라운 그늘) · `Hairline`(36px 안쪽 카드 테두리) · `EmptyCard`(빈 크림 카드 — 엔딩과 오프닝 페이드인 출발점) · `Vignette` |
+| `src/scenes/Table.tsx` | 장면 하나 = 미디어 0~3개를 **같은 높이로 나란히**. 사진·일상·영상(`OffthreadVideo`) 공용. `light` = 크림 카드(첫 미디어 밝은 블러 워시 + 크림·핑크 그라데이션 + 빛 + 헤어라인, 흰 매트), `dark` = 첫 미디어 어두운 블러 배경(단독이면 매트 없이 높이 1080, 여럿이면 흰 매트). `extras` 스티커, `fadeIn` |
 | `public/photos/` | 웨딩 사진 hero + 01~20 — 전부 세로 1707×2560(2:3) |
 | `public/daily/` | 일상 사진 4·4컷 7·스티커 2. 원본은 `~/Downloads/drive-download-20261012T235632Z-1-001`(구글 드라이브), 긴 변 2560 축소. **깃에 안 올림**(리포가 public) — `stage-media.py` 로 재생성 |
 | `public/clips/` | 일상 영상 11개 — H.264·무음·30fps. 원본 같은 폴더. 세로 폰 영상 4개는 회전 메타만 있던 것을 픽셀 회전으로 구움. **깃에 안 올림** — `stage-clips.sh` 로 재생성 |
-| `public/textures/` | `walnut.jpg`·`oak.jpg` — `scripts/textures.py` 로 numpy 생성(시드 고정, 재생성 결과 동일) |
 | `public/fonts/` | 지금은 안 씀(글자 없음). 문구를 되살릴 때를 위해 남겨 둠 |
-| `scripts/` | `fetch-photos.sh`, `sheet.py`, `textures.py`, `stage-media.py`, `stage-clips.sh` |
+| `scripts/` | `fetch-photos.sh`, `sheet.py`, `stage-media.py`, `stage-clips.sh` |
 
-## 디자인 규칙 (2026-10-13 사용자 승인 — 바꾸기 전에 스틸로 보여주고 물어볼 것)
+## 디자인 규칙 (2026-10-13 사용자 확정 — 바꾸기 전에 스틸로 보여주고 물어볼 것)
 
-- **컨셉: 우드 테이블 위에 놓인 인화 사진.** 식장(아벤티움)이 우드톤이라 배경을 월넛(어두운 원목, 집중)·오크(밝은 원목, 가벼움) 두 가지로 번갈아 쓴다. 청첩장 팔레트(크림·브라운·핑크)는 2026-10-13 사용자 요청으로 뺐다. 사용자는 색 시안을 되돌린 전력이 있다 — 새 색·새 결은 먼저 스틸 1~2장으로 보여주고 확인받는다.
-- **글자는 어디에도 없다.** 오프닝·엔딩 카드·문구·하단 서명 전부 제거(사용자 요청). 되살리려면 커밋 `befddab` 에 Opening/Ending/Caption 구현과 폰트 로더가 있다.
-- **사진은 절대 잘라내지 않는다.** `Table` 이 매트 안쪽을 각 미디어 비율 그대로 계산하므로 세로·가로·정사각이 섞여도 같은 높이로 놓이고 잘리지 않는다. 높이 상한은 `size`(xl 1020 · l 930 · m 860, 매트 포함), 폭이 모자라면 자동으로 줄어든다. 켄 번스 없음 — 매트가 올라오는 스프링 + ±8px 드리프트만.
-- 가로 영상 둘을 나란히 두면 높이 490 으로 작아진다 → 가로 영상은 단독(1603×902)으로, 세로+가로 혼합은 괜찮다.
+- **팔레트는 청첩장과 동일하게 고정**: 크림 `#fbf6f1`, 브라운 `#8b7355` / 진브라운 `#3f3128`, 핑크 `#fdadbc`, 흰 매트. 2026-10-13 우드톤(월넛·오크 나뭇결) 시안을 승인 후 전체 적용했다가 **사용자가 당일 원래 디자인으로 되돌렸다**(청첩장 사이트에서도 색 시안을 되돌린 전력 있음). 색 변경 제안은 하지 않는다 — 다듬기만.
+- **컨셉: 청첩장 카드 안의 인화 사진.** `light` 장면은 크림 카드(같은 사진의 밝은 블러 워시 + 크림·핑크 그라데이션 + 떠다니는 핑크 빛 + 36px 안쪽 브라운 헤어라인 테두리)에 흰 매트(14px, 매트 한가운데 가는 선). `dark` 장면은 원래 FullFit — 사진을 높이 1080 에 꽉 채우고 양옆은 같은 사진 `blur(42px) brightness(0.72)`, 매트 없음, 비네트 0.22. 힘은 이 밝음·어두움 대비에만 쓰고 나머지는 조용하게.
+- **글자는 어디에도 없다.** 오프닝·엔딩 카드·문구·하단 서명 전부 제거(사용자 요청). 되살리려면 커밋 `befddab` 에 Opening/Ending/Caption 구현과 폰트 로더가 있다(`public/fonts/` 는 남겨 둠).
+- **사진은 절대 잘라내지 않는다.** `Table` 이 매트 안쪽을 각 미디어 비율 그대로 계산하므로 세로·가로·정사각이 섞여도 같은 높이로 놓이고 잘리지 않는다. 높이 상한은 `size`(l 930 · m 860, 매트 포함), 폭이 모자라면 자동으로 줄어든다. 켄 번스는 **블러 배경에만**(light 1.18→1.26, dark 1.0→1.1), 매트는 스프링으로 올라온 뒤 ±8px 드리프트만.
+- 가로 영상 둘을 나란히 두면 높이 490 으로 작아진다 → 가로 영상은 단독으로. 세로+가로 혼합은 괜찮다.
 - 4컷·일상 사진은 `rotate` ±1~2.5° 로 툭 놓인 느낌, 웨딩 사진은 반듯하게. 스티커(고양이 캐릭터 시트에서 한 마리씩 오려냄)는 4컷 장면·고양이 사진 장면에 하나씩만.
-- 영상은 `CLIPS` 의 `from`(시작 초)·`rate`(배속) 로 트리밍. 비하인드 0.8x, 다리 그림자·이불 고양이 0.9x, 무릎 고양이 0.8x.
-- 전환은 1초 페이드 고정. 장면 길이 5.4~7초. 엔딩은 빈 월넛 테이블 4초, 마지막 2초 검정으로.
-- 챕터 순서: 비하인드 클립 → 스튜디오(hero·01·03·15+17·02·16) → 간주1(카페+피아노 고양이, 4컷 3장) → 벽돌집(04+05·벽돌담 클립·06·20) → 간주2(가을 그림자 2개, 마라톤+공원 영상, 4컷 2장) → 베이지·핑크 실내(07·08+09·10) → 간주3(고양이 영상 3장면, 고양이 사진) → 블랙 캐주얼 거리(11+12·13·14) → 간주4(크리스마스+판다 4컷, 바다 셀피) → 저녁(19·18) → 엔딩.
+- **반복 재생 전제라 천천히**: 장면 7.5~9초, 전환 1.5초 페이드, 총 187.8초. 영상 장면은 `CLIPS` 의 `from`·`rate`(비하인드 0.7x, 벽돌담·다리 그림자·이불 고양이 0.8x, 무릎 고양이 0.75x)로 늘린 뒤 `(length-from)/rate` 상한까지. 0.7x 아래는 프레임 중복이 눈에 띄니 피한다.
+- **이음새**: 마지막 장면은 빈 크림 카드(`EmptyCard`, 4.5초), 첫 장면은 같은 빈 카드가 1.5초 걷히며(`fadeIn`) 시작 → 반복 재생 시 끊김 없음. 검정 페이드는 쓰지 않는다.
+- 챕터 순서: 비하인드 클립 → 스튜디오(hero·01·03·15+17·02·16) → 간주1(카페+피아노 고양이, 4컷 3장) → 벽돌집(04+05·벽돌담 클립·06·20) → 간주2(가을 그림자 2개, 마라톤+공원 영상, 4컷 2장) → 베이지·핑크 실내(07·08+09·10) → 간주3(고양이 영상 3장면, 고양이 사진) → 블랙 캐주얼 거리(11+12·13·14) → 간주4(크리스마스+판다 4컷, 바다 셀피) → 저녁(19·18) → 빈 카드.
 
 ## 검증 방법 (렌더 전·후 반드시)
 
@@ -80,8 +79,8 @@ npx remotion compositions src/index.ts   # "Wedding 30 1920x1080 4401 (146.70 se
 
 ## 상태 / 남은 일
 
-- v3 = 우드톤 + 일상 소재 혼합 + 글자 없음, 146.7초, 무음. 산출물 `~/Downloads/식전영상_v3_우드톤.mp4`(깃 밖). 사용자가 시청 피드백 예정.
-- v2(청첩장 팔레트·문구 있음, 102초)는 커밋 `befddab`.
+- v4 = 청첩장 팔레트 복귀 + 일상 소재 혼합 + 글자 없음 + 느린 템포(반복 재생), 187.8초, 무음. 산출물 `~/Downloads/식전영상_v4.mp4`(깃 밖). 사용자가 시청 피드백 예정.
+- v3(우드톤, 146.7초)는 커밋 `9ae0804` — 사용자가 되돌림. v2(청첩장 팔레트·문구 있음, 102초)는 커밋 `befddab`.
 - **음악 미정**: 곡을 받으면 `<Audio src={staticFile('music.mp3')} />` 를 `Wedding.tsx` 에 넣고, 비트 길이에 맞춰 `plan.ts` 의 `seconds` 를 재배치한다(비트 분석은 numpy/scipy 로 가능).
 - **식장 상영 규격 미확인**(해상도·형식·최대 길이). 1080p/mp4 가 아니면 `Root.tsx` 의 `width/height/fps` 조정 — 레이아웃이 1920×1080 절대값이라 4K 는 전체를 `scale(2)` 로 감싼다.
 

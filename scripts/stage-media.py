@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""일상 사진·4컷·스티커를 public/daily 로 스테이징한다 (원본은 깃 밖, 구글 드라이브 내려받기 폴더).
+"""일상 사진·4컷·스티커를 public/daily 로 스테이징한다 (원본은 깃 밖: ~/Downloads/wedding_video_v4).
 
 사용: python3 -I scripts/stage-media.py <원본 폴더>
 - EXIF 회전을 적용하고(삼성 폰 사진은 EXIF 로 세로를 표시한다 — ffmpeg 콘택트 시트는 이를 무시하니 PIL 기준이 맞다)
@@ -16,7 +16,6 @@ SRC = pathlib.Path(sys.argv[1])
 DST = pathlib.Path(__file__).resolve().parent.parent / "public" / "daily"
 NAMES = {
     "10km_김나은_23061(1).jpg": "d_marathon.jpg",
-    "1789567142819.jpg": "d_sea_selfie.jpg",
     "20260723_004608.jpg": "d_cat_a.jpg",
     "20260723_004815.jpg": "d_cat_b.jpg",
     "niibjgKLwXjK.jpg": "s01_pola_2502.jpg",
@@ -26,6 +25,20 @@ NAMES = {
     "MbLpwovngbAu.jpg": "s05_pola_2512.jpg",
     "image-3.jpg": "s06_life4_panda_2602.jpg",
     "Pic.jpg": "s07_photoism.jpg",
+    # 2026-10-14 추가분
+    "1726333670357-1.jpg": "n01_night_window_2409.jpg",
+    "1733116315102-7.jpg": "n02_photoism_mirror_2412.jpg",
+    "20241202_125047.jpg": "n03_aquarium_heart_2412.jpg",
+    "20241202_125118.jpg": "n04_yellow_mirror_2412.jpg",
+    "1757503010145(1).jpg": "n05_cat_heart_hands_2509.jpg",
+    "20250913_194024.jpg": "n06_shadow_hands_2509.jpg",
+    "20250918_205747.jpg": "n07_groom_graycat_2509.jpg",
+    "20251010_204032.jpg": "n08_strip_mirror_2510.jpg",
+    "20251018_141620.jpg": "n09_groom_browncat_2510.jpg",
+    "1762954714758.jpg": "n10_phone_leaves_2511.jpg",
+    "20251129_172003.jpg": "n11_cat_window_2511.jpg",
+    "20260124_151758.jpg": "n12_cake500_2601.jpg",
+    "20260220_112706.jpg": "n13_heart_water_2602.jpg",
     "four-cut-character-1.png": "st_cat_gray.png",
     "four-cut-character.png": "st_cat_brown.png",
 }

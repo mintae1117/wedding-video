@@ -78,8 +78,8 @@ export type Scene = {
   /** 매트 바깥 높이 상한 — l 930 · m 860. dark 단독 사진은 매트 없이 1080 꽉 채움(size 무시) */
   size?: 'xl' | 'l' | 'm';
   extras?: Extra[];
-  /** 장면 시작에서 빈 크림 카드가 걷히는 초 (오프닝 전용 — 엔딩의 빈 카드와 이어져 반복 재생이 매끄럽다) */
-  fadeIn?: number;
+  /** 진행도(배경 줌·드리프트) 계산에 쓸 길이(초). 루프 꼬리가 원본 첫 장면과 같은 움직임을 내도록 할 때만 지정 */
+  motionSeconds?: number;
 };
 
 const photo = (key: string): Item => ({kind: 'photo', key});
@@ -92,8 +92,8 @@ const STICKER_BROWN: Extra = {file: 'daily/sticker_cat_brown.png', left: 1630, t
 // 챕터(웨딩 사진) 사이사이에 일상 간주를 끼운다. dark(어두운 블러 배경)·light(크림 카드)를 번갈아 리듬을 만든다.
 // 간주는 시기·주제로 묶는다: 처음(2024) → 가을(2025) → 겨울·500일 → 고양이. 장면 길이는 v4 와 같은 7.5~9초.
 export const SCENES: Scene[] = [
-  // 오프닝 — 빈 크림 카드에서 촬영 비하인드 클립(0.7배속)이 떠오르고 hero 로
-  {tone: 'dark', items: [clip('studioBts')], seconds: 6, fadeIn: 1.5},
+  // 오프닝 — 촬영 비하인드 클립(0.7배속)에서 hero 로. 첫 51프레임은 아래 LOOP_OFFSET 으로 잘린다(반복 재생 이음새)
+  {tone: 'dark', items: [clip('studioBts')], seconds: 6},
   {tone: 'dark', items: [photo('hero')], seconds: 8.5},
   // 스튜디오 흰 드레스
   {tone: 'light', items: [photo('p01')], size: 'l', seconds: 7.5},
@@ -133,16 +133,24 @@ export const SCENES: Scene[] = [
   {tone: 'dark', items: [clip('catPiano'), clip('catPet'), clip('catPetNY')], size: 'l', seconds: 7.5},
   {tone: 'light', items: [clip('catLap')], size: 'l', seconds: 7.5},
   {tone: 'light', items: [daily('catA', -1.5), daily('catB', 1.2)], size: 'm', seconds: 7.5, extras: [STICKER_GRAY, STICKER_BROWN]},
-  // 저녁 → 엔딩(빈 크림 카드 — 반복 재생 시 오프닝 페이드인과 이어진다)
+  // 저녁 — 마지막 사진. 그 뒤에 첫 장면 사본(LOOP_TAIL)이 붙어 p18 → 비하인드 페이드가 영상 안에 들어간다
   {tone: 'light', items: [photo('p19')], size: 'l', seconds: 7.5},
   {tone: 'dark', items: [photo('p18')], seconds: 9},
-  {tone: 'light', items: [], seconds: 4.5},
 ];
 
 export const sceneFrames = (s: Scene) => Math.round(s.seconds * FPS);
 export const transitionFrames = Math.round(TRANSITION_SEC * FPS);
-export const totalFrames = () =>
-  SCENES.reduce((acc, s) => acc + sceneFrames(s), 0) - transitionFrames * (SCENES.length - 1);
+
+/**
+ * 반복 재생 이음새(식장에서 루프): 빈 카드·검정 페이드 없이 마지막 사진에서 첫 장면으로 바로 페이드된다.
+ * 시리즈 끝에 첫 장면의 사본(꼬리, 전환 45프레임 + 6프레임)을 붙이고, 영상은 시리즈의 51번째 프레임부터 시작한다.
+ * → 영상의 마지막 프레임 = 꼬리의 50번째 프레임, 첫 프레임 = 원본 첫 장면의 51번째 프레임이라 한 프레임 차이로 이어진다.
+ */
+export const LOOP_OFFSET = transitionFrames + 6;
+export const SERIES: Scene[] = [...SCENES, {...SCENES[0], seconds: LOOP_OFFSET / FPS, motionSeconds: SCENES[0].seconds}];
+const seriesFrames = () => SERIES.reduce((acc, s) => acc + sceneFrames(s), 0) - transitionFrames * (SERIES.length - 1);
+/** 실제 영상 길이(프레임) */
+export const totalFrames = () => seriesFrames() - LOOP_OFFSET;
 
 /** 키 오타·클립보다 긴 장면을 번들 시점에 잡는다 */
 const validate = () => {

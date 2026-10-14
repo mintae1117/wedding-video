@@ -42,11 +42,13 @@ export const Table: React.FC<{
   size?: keyof typeof SIZE;
   gap?: number;
   extras?: Extra[];
-  fadeIn?: number;
-}> = ({tone, items, size = 'l', gap = 56, extras = [], fadeIn}) => {
+  motionSeconds?: number;
+}> = ({tone, items, size = 'l', gap = 56, extras = [], motionSeconds}) => {
   const frame = useCurrentFrame();
   const {fps, durationInFrames} = useVideoConfig();
-  const p = interpolate(frame, [0, Math.max(1, durationInFrames)], [0, 1], {extrapolateRight: 'clamp'});
+  // 루프 꼬리(짧은 사본)는 원본 장면과 같은 진행도로 움직여야 마지막 프레임과 첫 프레임이 이어진다
+  const motionFrames = motionSeconds ? Math.round(motionSeconds * fps) : durationInFrames;
+  const p = interpolate(frame, [0, Math.max(1, motionFrames)], [0, 1], {extrapolateRight: 'clamp'});
   const rs = items.map(resolve);
   const light = tone === 'light';
   const matted = light || items.length > 1;
@@ -58,9 +60,6 @@ export const Table: React.FC<{
   const ws = rs.map((r) => Math.round(h * r.aspect));
   const totalW = ws.reduce((a, w) => a + w + pad * 2, 0) + gap * (items.length - 1);
   const top = (1080 - (h + pad * 2)) / 2;
-  const veil = fadeIn
-    ? interpolate(frame, [0, fadeIn * fps], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})
-    : 0;
   if (rs.length === 0) return <EmptyCard />;
 
   const first = rs[0];
@@ -139,11 +138,6 @@ export const Table: React.FC<{
         );
       })}
       {light ? null : <Vignette strength={0.22} />}
-      {veil > 0 ? (
-        <AbsoluteFill style={{opacity: veil}}>
-          <EmptyCard />
-        </AbsoluteFill>
-      ) : null}
     </AbsoluteFill>
   );
 };
